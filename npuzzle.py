@@ -104,7 +104,25 @@ def goal_test(state):
     #             return False
                 
     # return True
-   
+
+def get_solution(initialState, parents, actions):
+    solution = []
+    state = ((0, 1, 2),
+             (3, 4, 5),
+             (6, 7, 8))
+
+    # Until we back track from the goal to the initial state
+    # use the actions dictionary to get the actions and add it
+    # to the front of the solution list and set the parent state
+    # as the state to continue the while loop 
+    while (parents.get(state) != initialState):
+        solution.insert(0, actions.get(state))
+        state = parents.get(state)
+
+    solution.insert(0, actions.get(state))
+
+    return solution
+
 def bfs(state):
     """
     Breadth first search.
@@ -128,8 +146,8 @@ def bfs(state):
     while (frontier):
         # Pop the the first element in the queue
         currentState = frontier.pop(0)
-        states_expanded += 1
         explored.add(currentState)
+        states_expanded += 1
 
         # Test if the current state is the goal
         if (goal_test(currentState)):
@@ -157,24 +175,6 @@ def bfs(state):
                     max_frontier = len(frontier)
 
     return None, states_expanded, max_frontier # No solution found
-         
-def get_solution(initialState, parents, actions):
-    solution = []
-    state = ((0, 1, 2),
-             (3, 4, 5),
-             (6, 7, 8))
-
-    # Until we back track from the goal to the initial state
-    # use the actions dictionary to get the actions and add it
-    # to the front of the solution list and set the parent state
-    # as the state to continue the while loop 
-    while (parents.get(state) != initialState):
-        solution.insert(0, actions.get(state))
-        state = parents.get(state)
-
-    solution.insert(0, actions.get(state))
-
-    return solution
 
 def dfs(state):
     """
@@ -200,8 +200,8 @@ def dfs(state):
     # than a queue
     while (frontier):
         currentState = frontier.pop()
-        states_expanded += 1
         explored.add(currentState)
+        states_expanded += 1
 
         if (goal_test(currentState)):
             solution = get_solution(initialState, parents, actions)
@@ -232,6 +232,8 @@ def misplaced_heuristic(state):
 
     for row in range(len(state)):
         for element in range(len(state[row])):
+            if (state[row][element] == 0):
+                continue
             if (state[row][element] != row * 3 + element):
                 misplaced += 1
                 
@@ -243,9 +245,23 @@ def manhattan_heuristic(state):
     For each misplaced tile, compute the manhattan distance between the current
     position and the goal position. THen sum all distances. 
     """
+    manhattanDist = 0
 
-    return 0 # replace this
+    # Iterate through the whole state one by one (excluding 0)
+    # and calculate the row/column (x/y) distances by using
+    # the remainder the division values
+    for row in range(len(state)):
+        for column in range(len(state[row])):
+            if (state[row][column] == 0):
+                continue
+            else:
+                tile = int(state[row][column])
+                xDist = abs(column - (tile % 3))
+                yDist = abs(row - (tile / 3))
+                totalDist = xDist + yDist
+                manhattanDist += totalDist
 
+    return manhattanDist
 
 def best_first(state, heuristic = misplaced_heuristic):
     """
@@ -278,12 +294,17 @@ def best_first(state, heuristic = misplaced_heuristic):
         # Since the frontier list is organized as [(cost, state), ...], the second
         # element in the list tuple is the current state
         currentState = heappop(frontier)[1]
-        states_expanded += 1
         explored.add(currentState)
+        
+        # Increment states_expanded, counting goal state as expanded
+        states_expanded += 1
 
         if (goal_test(currentState)):
+            print(len(explored))
             solution = get_solution(initialState, parents, actions)
             return solution, states_expanded, max_frontier
+
+        
 
         successors = get_successors(currentState)
         for successor in successors:
@@ -325,11 +346,50 @@ def astar(state, heuristic = misplaced_heuristic):
     actions = {}
     costs = {}
     costs[state] = 0
+    frontier = []
    
     states_expanded = 0
     max_frontier = 0
 
     #YOUR CODE HERE
+    initialState = state
+            
+    #YOUR CODE HERE
+    heappush(frontier, (0, state))
+    explored = set()
+    seen = set()    
+    seen.add(state)
+
+    while (frontier):
+        # Since the frontier list is organized as [(cost, state), ...], the second
+        # element in the list tuple is the current state
+        currentState = heappop(frontier)[1]
+        print(currentState)
+        explored.add(currentState)
+        
+        # Increment states_expanded, counting goal state as expanded
+        states_expanded += 1
+
+        if (goal_test(currentState)):
+            solution = get_solution(initialState, parents, actions)
+            return solution, states_expanded, max_frontier
+
+        successors = get_successors(currentState)
+        for successor in successors:
+            childState = successor[1]
+            childAction = successor[0]
+            if (parents.get(childState) == None):
+                parents[childState] = currentState
+            if (actions.get(childState) == None):
+                actions[childState] = childAction
+            if ((childState not in seen) and (childState not in explored)):
+                costs[childState] = costs.get(currentState) + 1
+                childCost = heuristic(childState) + costs.get(childState)
+                
+                heappush(frontier, (childCost, childState))
+                seen.add(childState)
+                if (len(frontier) > max_frontier):
+                    max_frontier = len(frontier)
 
     # The following line computes the heuristic for a state
     # by calling the heuristic function passed as a parameter. 
@@ -351,7 +411,7 @@ def print_result(solution, states_expanded, max_frontier):
         print("No solution found.")
     else: 
         print("Solution has {} actions.".format(len(solution)))
-    print("Total states exppanded: {}.".format(states_expanded))
+    print("Total states expanded: {}.".format(states_expanded))
     print("Max frontier size: {}.".format(max_frontier))
 
 
@@ -364,21 +424,21 @@ if __name__ == "__main__":
                   (3, 6, 7))  
 
     #More difficult test case
-    test_state = ((7, 2, 4),
-                 (5, 0, 6), 
-                 (8, 3, 1))  
+    # test_state = ((7, 2, 4),
+    #              (5, 0, 6), 
+    #              (8, 3, 1))  
 
     print(state_to_string(test_state))
     print()
 
-    print("====BFS====")
-    start = time.time()
-    solution, states_expanded, max_frontier = bfs(test_state) #
-    end = time.time() 
-    print_result(solution, states_expanded, max_frontier)
-    if solution is not None:
-        print(solution)
-    print("Total time: {0:.3f}s".format(end-start))
+    # print("====BFS====")
+    # start = time.time()
+    # solution, states_expanded, max_frontier = bfs(test_state) #
+    # end = time.time() 
+    # print_result(solution, states_expanded, max_frontier)
+    # if solution is not None:
+    #     print(solution)
+    # print("Total time: {0:.3f}s".format(end-start))
 
     #print() 
     #print("====DFS====") 
@@ -388,27 +448,29 @@ if __name__ == "__main__":
     #print_result(solution, states_expanded, max_frontier)
     #print("Total time: {0:.3f}s".format(end-start))
 
-    print() 
-    print("====Greedy Best-First (Misplaced Tiles Heuristic)====") 
-    start = time.time()
-    solution, states_expanded, max_frontier = best_first(test_state, misplaced_heuristic)
-    end = time.time()
-    print_result(solution, states_expanded, max_frontier)
-    print("Total time: {0:.3f}s".format(end-start))
+    # print() 
+    # print("====Greedy Best-First (Misplaced Tiles Heuristic)====") 
+    # start = time.time()
+    # solution, states_expanded, max_frontier = best_first(test_state, misplaced_heuristic)
+    # end = time.time()
+    # print_result(solution, states_expanded, max_frontier)
+    # print("Total time: {0:.3f}s".format(end-start))
     
-    #print() 
-    #print("====A* (Misplaced Tiles Heuristic)====") 
-    #start = time.time()
-    #solution, states_expanded, max_frontier = astar(test_state, misplaced_heuristic)
-    #end = time.time()
-    #print_result(solution, states_expanded, max_frontier)
-    #print("Total time: {0:.3f}s".format(end-start))
+    # print() 
+    # print("====A* (Misplaced Tiles Heuristic)====") 
+    # start = time.time()
+    # solution, states_expanded, max_frontier = astar(test_state, misplaced_heuristic)
+    # end = time.time()
+    # print_result(solution, states_expanded, max_frontier)
+    # print("Total time: {0:.3f}s".format(end-start))
 
-    #print() 
-    #print("====A* (Total Manhattan Distance Heuristic)====") 
-    #start = time.time()
-    #solution, states_expanded, max_frontier = astar(test_state, manhattan_heuristic)
-    #end = time.time()
-    #print_result(solution, states_expanded, max_frontier)
-    #print("Total time: {0:.3f}s".format(end-start))
+    test_state = ((0,1,2), (3,4,5), (6,7,8))
+    print(manhattan_heuristic(test_state))
+    # print() 
+    # print("====A* (Total Manhattan Distance Heuristic)====") 
+    # start = time.time()
+    # solution, states_expanded, max_frontier = astar(test_state, manhattan_heuristic)
+    # end = time.time()
+    # print_result(solution, states_expanded, max_frontier)
+    # print("Total time: {0:.3f}s".format(end-start))
 
