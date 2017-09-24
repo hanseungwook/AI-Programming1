@@ -364,18 +364,24 @@ def astar(state, heuristic = misplaced_heuristic):
             solution = get_solution(initialState, parents, actions)
             return solution, states_expanded, max_frontier
 
+        # Get a list of successors of the current state
         successors = get_successors(currentState)
         for successor in successors:
+            # If the successor was not saved in the parents and actions dictionaries
+            # save the respective key and values
             childState = successor[1]
             childAction = successor[0]
             if (parents.get(childState) == None):
                 parents[childState] = currentState
             if (actions.get(childState) == None):
                 actions[childState] = childAction
+
+            # If child state not in seen and explored, push to the frontier
+            # priority queue and add to seen set
             if ((childState not in seen) and (childState not in explored)):
+                # Calculating the heuristic cost of the child + the cost of the path until the state
                 costs[childState] = costs.get(currentState) + 1
                 childCost = heuristic(childState) + costs.get(childState)
-                
                 heappush(frontier, (childCost, childState))
                 seen.add(childState)
                 if (len(frontier) > max_frontier):
@@ -401,9 +407,9 @@ if __name__ == "__main__":
                   (3, 6, 7))  
 
     #More difficult test case
-    # test_state = ((7, 2, 4),
-    #              (5, 0, 6), 
-    #              (8, 3, 1))  
+    test_state = ((7, 2, 4),
+                 (5, 0, 6), 
+                 (8, 3, 1))  
 
     print(state_to_string(test_state))
     print()
