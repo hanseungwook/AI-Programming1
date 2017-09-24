@@ -6,7 +6,7 @@ for solving the n-Puzzle, which is a generalization of the 8 and 15 puzzle to
 squares of arbitrary size (we will only test it with 8-puzzles for now). 
 See Courseworks for detailed instructions.
 
-@author: YOUR NAME (YOUR UNI)
+@author: Seungwook Han (sh3264)
 """
 
 import time
@@ -16,10 +16,10 @@ def state_to_string(state):
     return "\n".join(row_strings)
 
 
+# Returns a new state with the cells (i1,j1) and (i2,j2) swapped. 
+
 def swap_cells(state, i1, j1, i2, j2):
-    """
-    Returns a new state with the cells (i1,j1) and (i2,j2) swapped. 
-    """
+
     value1 = state[i1][j1]
     value2 = state[i2][j2]
     
@@ -37,30 +37,33 @@ def swap_cells(state, i1, j1, i2, j2):
     return tuple(new_state)
     
 
+# This function returns a list of possible successor states resulting
+# from applicable actions. 
+# The result should be a list containing (Action, state) tuples. 
+# For example [("Up", ((1, 4, 2),(0, 5, 8),(3, 6, 7))), 
+#              ("Left",((4, 0, 2),(1, 5, 8),(3, 6, 7)))] 
+
 def get_successors(state):
-    """
-    This function returns a list of possible successor states resulting
-    from applicable actions. 
-    The result should be a list containing (Action, state) tuples. 
-    For example [("Up", ((1, 4, 2),(0, 5, 8),(3, 6, 7))), 
-                 ("Left",((4, 0, 2),(1, 5, 8),(3, 6, 7)))] 
-    """ 
+
     hole = ()
     holeRow = 0
     holeElement = 0
 
+    # Saves the row and column number of the hole '0' into holeRow and hole Element respectively
     for row in range(len(state)):
         for element in range(len(state[row])):
             if (state[row][element] == 0):
                 holeRow = row
                 holeElement = element
   
+    # Initializing the child_states list and tuples for each of the actions
     child_states = []
     left = ()
     right = ()
     up = ()
     down = ()
 
+    # Swapping accordingly to the action if it is possible
     if ((holeElement % 3) != 2):
         left = ('Left', swap_cells(state, holeRow, holeElement, holeRow, (holeElement + 1)))
     if ((holeElement % 3) != 0):
@@ -70,6 +73,8 @@ def get_successors(state):
     if (holeRow != 0):
         down = ('Down', swap_cells(state, holeRow, holeElement, (holeRow - 1), holeElement))
 
+    # If the respective tuples are not empty, append them to the child_states list in order
+    # of Left -> Right -> Up -> Down
     if (left):
         child_states.append(left)
     if (right):
@@ -78,32 +83,23 @@ def get_successors(state):
         child_states.append(up)
     if (down):
         child_states.append(down)
-
-    # YOUR CODE HERE . Hint: Find the "hole" first, then generate each possible
-    # successor state by calling the swap_cells method.
-    # Exclude actions that are not applicable. 
-
     
     return child_states
 
-            
+
+# Returns True if the state is a goal state, False otherwise.         
+
 def goal_test(state):
-    """
-    Returns True if the state is a goal state, False otherwise. 
-    """    
+
     goalState = ((0,1,2), (3,4,5), (6,7,8))
     if (state == goalState):
         return True
     else:
         return False
 
-    #YOUR CODE HERE
-    # for row in range(len(state)):
-    #     for element in range(len(state[row])):
-    #         if (state[row][element] != row * 3 + element):
-    #             return False
-                
-    # return True
+
+# Function that uses the parents and actions dictionaries
+# to put the solution of actions in order as a list
 
 def get_solution(initialState, parents, actions):
     solution = []
@@ -123,21 +119,21 @@ def get_solution(initialState, parents, actions):
 
     return solution
 
-def bfs(state):
-    """
-    Breadth first search.
-    Returns three values: A list of actions, the number of states expanded, and
-    the maximum size of the frontier.  
-    """
-    initialState = state
 
+# Breadth first search.
+# Returns three values: A list of actions, the number of states expanded, and
+# the maximum size of the frontier.  
+
+def bfs(state):
+
+    # Initializing the sets, dictionaries, and variables
     parents = {}
     actions = {}
 
     states_expanded = 0
     max_frontier = 0
-            
-    #YOUR CODE HERE
+    initialState = state
+
     frontier = [state]
     explored = set()
     seen = set()    
@@ -174,22 +170,23 @@ def bfs(state):
                 if (len(frontier) > max_frontier):
                     max_frontier = len(frontier)
 
-    return None, states_expanded, max_frontier # No solution found
+    return None, states_expanded, max_frontier
+
+
+# Depth first search.
+# Returns three values: A list of actions, the number of states expanded, and
+# the maximum size of the frontier.  
 
 def dfs(state):
-    """
-    Depth first search.
-    Returns three values: A list of actions, the number of states expanded, and
-    the maximum size of the frontier.  
-    """
-    initialState = state
 
+    # Initializing the sets, dictionaries, and variables
     parents = {}
     actions = {}
 
     states_expanded = 0
     max_frontier = 0
-            
+    initialState = state            
+
     frontier = [state]
     explored = set()
     seen = set()    
@@ -199,6 +196,7 @@ def dfs(state):
     # is popped from the back of the frontier list - implementing a stack rather
     # than a queue
     while (frontier):
+        # Pop from the end of the list (as a stack)
         currentState = frontier.pop()
         explored.add(currentState)
         states_expanded += 1
@@ -207,29 +205,36 @@ def dfs(state):
             solution = get_solution(initialState, parents, actions)
             return solution, states_expanded, max_frontier
 
+        # Get list of possible successors from the current state
         successors = get_successors(currentState)
         for successor in successors:
+            # If the successor was not saved in the parents and actions dictionaries
+            # save the respective key and values
             childState = successor[1]
             childAction = successor[0]
             if (parents.get(childState) == None):
                 parents[childState] = currentState
             if (actions.get(childState) == None):
                 actions[childState] = childAction
+
+            # If child state not in seen and explored, add to the back of the frontier
+            # stack and add to seen set
             if ((childState not in seen) and (childState not in explored)):
                 frontier.append(childState)
                 seen.add(childState)
                 if (len(frontier) > max_frontier):
                     max_frontier = len(frontier)
 
-    return None, states_expanded, max_frontier # No solution found
+    return None, states_expanded, max_frontier
 
-
+    
+# Returns the number of misplaced tiles.
+    
 def misplaced_heuristic(state):
-    """
-    Returns the number of misplaced tiles.
-    """
+
     misplaced = 0
 
+    # Excludes 0 from the count for misplaced tiles and counts the others
     for row in range(len(state)):
         for element in range(len(state[row])):
             if (state[row][element] == 0):
@@ -240,16 +245,16 @@ def misplaced_heuristic(state):
     return misplaced
 
 
+# For each misplaced tile, compute the manhattan distance between the current
+# position and the goal position. THen sum all distances. 
+
 def manhattan_heuristic(state):
-    """
-    For each misplaced tile, compute the manhattan distance between the current
-    position and the goal position. THen sum all distances. 
-    """
+
     manhattanDist = 0
 
     # Iterate through the whole state one by one (excluding 0)
     # and calculate the row/column (x/y) distances by using
-    # the remainder the division values
+    # the remainder the division values. 
     for row in range(len(state)):
         for column in range(len(state[row])):
             if (state[row][column] == 0):
@@ -257,34 +262,31 @@ def manhattan_heuristic(state):
             else:
                 tile = int(state[row][column])
                 xDist = abs(column - (tile % 3))
-                yDist = abs(row - (tile / 3))
+                yDist = abs(row - int(tile / 3))
                 totalDist = xDist + yDist
                 manhattanDist += totalDist
 
     return manhattanDist
 
-def best_first(state, heuristic = misplaced_heuristic):
-    """
-    Breadth first search using the heuristic function passed as a parameter.
-    Returns three values: A list of actions, the number of states expanded, and
-    the maximum size of the frontier.  
-    """
 
-    # You might want to use these functions to maintain a priority queue
+# Breadth first search using the heuristic function passed as a parameter.
+# Returns three values: A list of actions, the number of states expanded, and
+# the maximum size of the frontier.  
+
+def best_first(state, heuristic = misplaced_heuristic):
+
     from heapq import heappush
     from heapq import heappop
 
+    # Initializing the sets, dictionaries, priority queue and variables
     parents = {}
     actions = {}
     frontier = []
-    # costs = {}
-    # costs[state] = 0
     
     states_expanded = 0
     max_frontier = 0
     initialState = state
-            
-    #YOUR CODE HERE
+        
     heappush(frontier, (0, state))
     explored = set()
     seen = set()    
@@ -295,25 +297,27 @@ def best_first(state, heuristic = misplaced_heuristic):
         # element in the list tuple is the current state
         currentState = heappop(frontier)[1]
         explored.add(currentState)
-        
-        # Increment states_expanded, counting goal state as expanded
         states_expanded += 1
 
+        # Test if the current state is at goal and, if so, get solution
         if (goal_test(currentState)):
-            print(len(explored))
             solution = get_solution(initialState, parents, actions)
             return solution, states_expanded, max_frontier
 
-        
-
+        # Get a list of successors of the current state
         successors = get_successors(currentState)
         for successor in successors:
+            # If the successor was not saved in the parents and actions dictionaries
+            # save the respective key and values
             childState = successor[1]
             childAction = successor[0]
             if (parents.get(childState) == None):
                 parents[childState] = currentState
             if (actions.get(childState) == None):
                 actions[childState] = childAction
+
+            # If child state not in seen and explored, push to the frontier
+            # priority queue and add to seen set
             if ((childState not in seen) and (childState not in explored)):
                 childCost = heuristic(childState)
                 heappush(frontier, (childCost, childState))
@@ -321,27 +325,18 @@ def best_first(state, heuristic = misplaced_heuristic):
                 if (len(frontier) > max_frontier):
                     max_frontier = len(frontier)
 
-    # No solution found
-    # The following line computes the heuristic for a state
-    # by calling the heuristic function passed as a parameter. 
-    # f = heuristic(state) 
-
-    #  return solution, states_expanded, max_frontier
-
     return None, 0, 0 
 
 
+# A-star search using the heuristic function passed as a parameter. 
+# Returns three values: A list of actions, the number of states expanded, and
+# the maximum size of the frontier.  
 def astar(state, heuristic = misplaced_heuristic):
-    """
-    A-star search using the heuristic function passed as a parameter. 
-    Returns three values: A list of actions, the number of states expanded, and
-    the maximum size of the frontier.  
-    """
-    # You might want to use these functions to maintain a priority queue
 
     from heapq import heappush
     from heapq import heappop
 
+    # Initializing the dictionaries, sets, priority queue and variables
     parents = {}
     actions = {}
     costs = {}
@@ -350,11 +345,8 @@ def astar(state, heuristic = misplaced_heuristic):
    
     states_expanded = 0
     max_frontier = 0
-
-    #YOUR CODE HERE
     initialState = state
-            
-    #YOUR CODE HERE
+        
     heappush(frontier, (0, state))
     explored = set()
     seen = set()    
@@ -364,12 +356,10 @@ def astar(state, heuristic = misplaced_heuristic):
         # Since the frontier list is organized as [(cost, state), ...], the second
         # element in the list tuple is the current state
         currentState = heappop(frontier)[1]
-        print(currentState)
         explored.add(currentState)
-        
-        # Increment states_expanded, counting goal state as expanded
         states_expanded += 1
 
+        # Test if the current state is at goal and, if so, get solution
         if (goal_test(currentState)):
             solution = get_solution(initialState, parents, actions)
             return solution, states_expanded, max_frontier
@@ -391,30 +381,17 @@ def astar(state, heuristic = misplaced_heuristic):
                 if (len(frontier) > max_frontier):
                     max_frontier = len(frontier)
 
-    # The following line computes the heuristic for a state
-    # by calling the heuristic function passed as a parameter. 
-    # f = heuristic(state) 
- 
-    # Use the following two lines to retreive and return the 
-    # solution path:  
-    #  solution = get_solution(state, parents, actions, costs)
-    #  return solution, states_expanded, max_frontier
-
     return None, states_expanded, max_frontier # No solution found
 
-
+    
+# Helper function to format test output. 
 def print_result(solution, states_expanded, max_frontier):
-    """
-    Helper function to format test output. 
-    """
     if solution is None: 
         print("No solution found.")
     else: 
         print("Solution has {} actions.".format(len(solution)))
     print("Total states expanded: {}.".format(states_expanded))
     print("Max frontier size: {}.".format(max_frontier))
-
-
 
 if __name__ == "__main__":
 
@@ -431,46 +408,44 @@ if __name__ == "__main__":
     print(state_to_string(test_state))
     print()
 
-    # print("====BFS====")
-    # start = time.time()
-    # solution, states_expanded, max_frontier = bfs(test_state) #
-    # end = time.time() 
-    # print_result(solution, states_expanded, max_frontier)
-    # if solution is not None:
-    #     print(solution)
-    # print("Total time: {0:.3f}s".format(end-start))
+    print("====BFS====")
+    start = time.time()
+    solution, states_expanded, max_frontier = bfs(test_state) #
+    end = time.time() 
+    print_result(solution, states_expanded, max_frontier)
+    if solution is not None:
+        print(solution)
+    print("Total time: {0:.3f}s".format(end-start))
 
-    #print() 
-    #print("====DFS====") 
-    #start = time.time()
-    #solution, states_expanded, max_frontier = dfs(test_state)
-    #end = time.time()
-    #print_result(solution, states_expanded, max_frontier)
-    #print("Total time: {0:.3f}s".format(end-start))
+    print() 
+    print("====DFS====") 
+    start = time.time()
+    solution, states_expanded, max_frontier = dfs(test_state)
+    end = time.time()
+    print_result(solution, states_expanded, max_frontier)
+    print("Total time: {0:.3f}s".format(end-start))
 
-    # print() 
-    # print("====Greedy Best-First (Misplaced Tiles Heuristic)====") 
-    # start = time.time()
-    # solution, states_expanded, max_frontier = best_first(test_state, misplaced_heuristic)
-    # end = time.time()
-    # print_result(solution, states_expanded, max_frontier)
-    # print("Total time: {0:.3f}s".format(end-start))
+    print() 
+    print("====Greedy Best-First (Misplaced Tiles Heuristic)====") 
+    start = time.time()
+    solution, states_expanded, max_frontier = best_first(test_state, misplaced_heuristic)
+    end = time.time()
+    print_result(solution, states_expanded, max_frontier)
+    print("Total time: {0:.3f}s".format(end-start))
     
-    # print() 
-    # print("====A* (Misplaced Tiles Heuristic)====") 
-    # start = time.time()
-    # solution, states_expanded, max_frontier = astar(test_state, misplaced_heuristic)
-    # end = time.time()
-    # print_result(solution, states_expanded, max_frontier)
-    # print("Total time: {0:.3f}s".format(end-start))
+    print() 
+    print("====A* (Misplaced Tiles Heuristic)====") 
+    start = time.time()
+    solution, states_expanded, max_frontier = astar(test_state, misplaced_heuristic)
+    end = time.time()
+    print_result(solution, states_expanded, max_frontier)
+    print("Total time: {0:.3f}s".format(end-start))
 
-    test_state = ((0,1,2), (3,4,5), (6,7,8))
-    print(manhattan_heuristic(test_state))
-    # print() 
-    # print("====A* (Total Manhattan Distance Heuristic)====") 
-    # start = time.time()
-    # solution, states_expanded, max_frontier = astar(test_state, manhattan_heuristic)
-    # end = time.time()
-    # print_result(solution, states_expanded, max_frontier)
-    # print("Total time: {0:.3f}s".format(end-start))
+    print() 
+    print("====A* (Total Manhattan Distance Heuristic)====") 
+    start = time.time()
+    solution, states_expanded, max_frontier = astar(test_state, manhattan_heuristic)
+    end = time.time()
+    print_result(solution, states_expanded, max_frontier)
+    print("Total time: {0:.3f}s".format(end-start))
 
