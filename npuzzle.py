@@ -407,9 +407,9 @@ if __name__ == "__main__":
                   (3, 6, 7))  
 
     #More difficult test case
-    test_state = ((7, 2, 4),
-                 (5, 0, 6), 
-                 (8, 3, 1))  
+    # test_state = ((7, 2, 4),
+    #              (5, 0, 6), 
+    #              (8, 3, 1))  
 
     print(state_to_string(test_state))
     print()
